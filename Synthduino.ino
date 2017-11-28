@@ -34,6 +34,9 @@
 
 #include <mozzi_midi.h>
 
+#define WAVE_NUM_CELLS SAW2048_NUM_CELLS
+#define WAVE_DATA SAW2048_DATA
+
 #define USE_ADSR 1
 // use #define for CONTROL_RATE, not a constant
 

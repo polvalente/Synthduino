@@ -222,7 +222,9 @@ ISR(ADC_vect, ISR_BLOCK)
 }
 #endif // end main audio input section
 
-
+#if (STEREO_HACK == true)
+extern int audio_out_1, audio_out_2;
+#endif
 
 void audioHook() // 2us excluding updateAudio()
 {
@@ -237,10 +239,13 @@ void audioHook() // 2us excluding updateAudio()
 		updateAudio(); // in hacked version, this returns void
 		output_buffer.write((unsigned int) (audio_out_1 + AUDIO_BIAS));
 		output_buffer2.write((unsigned int) (audio_out_2 + AUDIO_BIAS));
-		#elif (USE_PORTC_OUT == 1)
-		output_buffer.write((unsigned int) (updateAudio() + AUDIO_BIAS));
 		#else
-		output_buffer.write((unsigned int) (updateAudio() + AUDIO_BIAS));
+		int out = updateAudio();
+		#ifndef USE_PORTC_OUT
+		output_buffer.write((unsigned int) (out + AUDIO_BIAS));
+		#else
+		output_buffer.write((unsigned int) (out + 128));
+		#endif
 		#endif
 
 	}
@@ -289,7 +294,12 @@ static void startAudioStandard()
 {
 	backupPreMozziTimer1();
 
+
+#ifndef USE_PORTC_OUT
 	pinMode(AUDIO_CHANNEL_1_PIN, OUTPUT);	// set pin to output for audio
+#else
+	DDRC = 255;
+#endif
 	//	pinMode(AUDIO_CHANNEL_2_PIN, OUTPUT);	// set pin to output for audio
 #if (AUDIO_MODE == STANDARD)
 	Timer1.initializeCPUCycles(16000000UL/AUDIO_RATE, PHASE_FREQ_CORRECT);		// set period, phase and frequency correct
@@ -297,9 +307,11 @@ static void startAudioStandard()
 	Timer1.initializeCPUCycles(16000000UL/PWM_RATE, FAST);	// fast mode enables higher PWM rate
 #endif
 
+	#ifndef USE_PORTC_OUT
 	Timer1.pwm(AUDIO_CHANNEL_1_PIN, AUDIO_BIAS);		// pwm pin, 50% of Mozzi's duty cycle, ie. 0 signal
 #if (STEREO_HACK == true)
 	Timer1.pwm(AUDIO_CHANNEL_2_PIN, AUDIO_BIAS);	// sets pin to output
+#endif
 #endif
 	TIMSK1 = _BV(TOIE1); 	// Overflow Interrupt Enable (when not using Timer1.attachInterrupt())
 	//TIMSK1 |= _BV(TOIE1) | _BV(OCIE1A); // Overflow Interrupt Enable and Output Compare A Match Interrupt Enable
@@ -345,7 +357,11 @@ AUDIO_CHANNEL_1_OUTPUT_REGISTER = output;
 AUDIO_CHANNEL_2_OUTPUT_REGISTER = 0;
 */
 
+	#ifdef USE_PORTC_OUT
+	PORTC = output_buffer.read();
+	#else
 	AUDIO_CHANNEL_1_OUTPUT_REGISTER = output_buffer.read();
+#endif
 #if (STEREO_HACK == true)
 		AUDIO_CHANNEL_2_OUTPUT_REGISTER = output_buffer2.read();
 #endif
@@ -368,24 +384,6 @@ AUDIO_CHANNEL_2_OUTPUT_REGISTER = 0;
 // end avr
 #endif
 // end STANDARD
-#elif (AUDIO_MODE == PORTC_OUT)
-static void startAudioPortC()
-{
-	backupPreMozziTimer1();
-
-	DDRC = 255;
-	Timer1.initializeCPUCycles(16000000UL/AUDIO_RATE, PHASE_FREQ_CORRECT);		// set period, phase and frequency correct
-
-	TIMSK1 = _BV(TOIE1); 	// Overflow Interrupt Enable (when not using Timer1.attachInterrupt())
-
-	backupMozziTimer1();
-}
-
-ISR(TIMER1_OVF_vect, ISR_BLOCK)
-{
-	AUDIO_CHANNEL_1_OUTPUT_REGISTER = output_buffer.read();
-}
-#endif
 //-----------------------------------------------------------------------------------------------------------------
 #elif (AUDIO_MODE == HIFI)
 
@@ -562,8 +560,6 @@ void startMozzi(int control_rate_hz)
 	startAudioStandard();
 #elif (AUDIO_MODE == HIFI)
 	startAudioHiFi();
-#elif (AUDIO_MODE == PORTC_OUT)
-	startAudioPortC();
 #endif
 }
 
