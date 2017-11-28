@@ -24,9 +24,8 @@
 
 #include <MIDI.h>
 
-#define USE_PORTC_OUTPUT 1
-
 #include <MozziGuts.h>
+
 #include <Oscil.h> // oscillator template
 #include <tables/saw2048_int8.h> // sawtooth table for oscillator
 #include <tables/sin2048_int8.h> // sine table for oscillator
