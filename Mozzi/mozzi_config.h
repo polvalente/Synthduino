@@ -28,7 +28,9 @@ and comment out \#define AUDIO_MODE STANDARD and \#define AUDIO_MODE STANDARD_PL
 //#define AUDIO_MODE HIFI
 //#define AUDIO_MODE PORTC_OUT
 //
-#define USE_PORTC_OUT
+#define USE_PORT_OUT
+#define OUT_PORT PORTC
+#define OUT_PORT_DDR DDRC
 
 
 /** @ingroup core

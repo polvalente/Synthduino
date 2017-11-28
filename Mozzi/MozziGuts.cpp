@@ -241,7 +241,7 @@ void audioHook() // 2us excluding updateAudio()
 		output_buffer2.write((unsigned int) (audio_out_2 + AUDIO_BIAS));
 		#else
 		int out = updateAudio();
-		#ifndef USE_PORTC_OUT
+		#ifndef USE_PORT_OUT
 		output_buffer.write((unsigned int) (out + AUDIO_BIAS));
 		#else
 		output_buffer.write((unsigned int) (out + 128));
@@ -295,10 +295,10 @@ static void startAudioStandard()
 	backupPreMozziTimer1();
 
 
-#ifndef USE_PORTC_OUT
+#ifndef USE_PORT_OUT
 	pinMode(AUDIO_CHANNEL_1_PIN, OUTPUT);	// set pin to output for audio
 #else
-	DDRC = 255;
+	OUT_PORT_DDR = 255;
 #endif
 	//	pinMode(AUDIO_CHANNEL_2_PIN, OUTPUT);	// set pin to output for audio
 #if (AUDIO_MODE == STANDARD)
@@ -307,7 +307,7 @@ static void startAudioStandard()
 	Timer1.initializeCPUCycles(16000000UL/PWM_RATE, FAST);	// fast mode enables higher PWM rate
 #endif
 
-	#ifndef USE_PORTC_OUT
+	#ifndef USE_PORT_OUT
 	Timer1.pwm(AUDIO_CHANNEL_1_PIN, AUDIO_BIAS);		// pwm pin, 50% of Mozzi's duty cycle, ie. 0 signal
 #if (STEREO_HACK == true)
 	Timer1.pwm(AUDIO_CHANNEL_2_PIN, AUDIO_BIAS);	// sets pin to output
@@ -357,8 +357,8 @@ AUDIO_CHANNEL_1_OUTPUT_REGISTER = output;
 AUDIO_CHANNEL_2_OUTPUT_REGISTER = 0;
 */
 
-	#ifdef USE_PORTC_OUT
-	PORTC = output_buffer.read();
+	#ifdef USE_PORT_OUT
+	OUT_PORT = output_buffer.read();
 	#else
 	AUDIO_CHANNEL_1_OUTPUT_REGISTER = output_buffer.read();
 #endif
